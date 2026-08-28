@@ -6,6 +6,13 @@ import { getAllPosts } from "@/lib/posts";
 export default function HomePage() {
   const posts = getAllPosts();
 
+  const searchPosts = posts.map((post) => ({
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    category: post.category,
+  }));
+
   return (
     <>
       <section className="hero">
@@ -24,7 +31,7 @@ export default function HomePage() {
             reporting and commentary.
           </p>
 
-          <SearchBox />
+          <SearchBox posts={searchPosts} />
 
         </div>
       </section>
@@ -61,8 +68,8 @@ export default function HomePage() {
             </h3>
 
             <p>
-              Add a Markdown file inside
-              <code> content/posts </code>
+              Add a Markdown file inside{" "}
+              <code>content/posts</code>{" "}
               and deploy.
             </p>
 
@@ -86,4 +93,4 @@ export default function HomePage() {
       </section>
     </>
   );
-}
+    }
