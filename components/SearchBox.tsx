@@ -7,15 +7,23 @@ import {
 
 import Link from "next/link";
 
-import { getSearchIndex }
-  from "@/lib/search-index";
+type SearchPost = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+};
 
-export default function SearchBox() {
+type SearchBoxProps = {
+  posts: SearchPost[];
+};
+
+export default function SearchBox({
+  posts,
+}: SearchBoxProps) {
 
   const [query, setQuery] =
     useState("");
-
-  const posts = getSearchIndex();
 
   const results = useMemo(() => {
 
@@ -29,8 +37,8 @@ export default function SearchBox() {
     return posts
       .filter((post) =>
         `${post.title}
-         ${post.category}
-         ${post.excerpt}`
+        ${post.category}
+        ${post.excerpt}`
           .toLowerCase()
           .includes(q)
       )
@@ -39,15 +47,14 @@ export default function SearchBox() {
   }, [query, posts]);
 
   return (
-
     <div>
 
       <div className="search-box">
 
         <input
           value={query}
-          onChange={(e) =>
-            setQuery(e.target.value)
+          onChange={(event) =>
+            setQuery(event.target.value)
           }
           placeholder="Search articles..."
           aria-label="Search articles"
@@ -96,6 +103,24 @@ export default function SearchBox() {
 
       )}
 
+      {query.trim() !== "" &&
+        results.length === 0 && (
+
+          <div className="search-results">
+
+            <span
+              style={{
+                display: "block",
+                padding: "12px 16px",
+              }}
+            >
+              No articles found.
+            </span>
+
+          </div>
+
+        )}
+
     </div>
   );
-}
+              }
