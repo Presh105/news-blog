@@ -21,7 +21,6 @@ export default function HomePage() {
           <p className="eyebrow">
             NEWS • ANALYSIS • STORIES
           </p>
-
           <h1>
             What matters, clearly.
           </h1>
