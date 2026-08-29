@@ -1,5 +1,7 @@
 export default function Footer() {
+
   return (
+
     <footer className="site-footer">
 
       <div className="container footer-inner">
@@ -9,9 +11,25 @@ export default function Footer() {
           {" "}The Daily Brief
         </span>
 
-        <span>
-          News, analysis and original stories.
-        </span>
+        <div className="footer-links">
+
+          <a href="/privacy">
+            Privacy
+          </a>
+
+          <a href="/terms">
+            Terms
+          </a>
+
+          <a href="/disclaimer">
+            Disclaimer
+          </a>
+
+          <a href="/contact">
+            Contact
+          </a>
+
+        </div>
 
       </div>
 
