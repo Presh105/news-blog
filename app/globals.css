@@ -965,3 +965,40 @@ img {
   }
 
                   }
+.footer-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--text);
+}
+
+.legal-page {
+  max-width: 800px;
+  min-height: 70vh;
+}
+
+.legal-page h1 {
+  font-size: 48px;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin-bottom: 30px;
+}
+
+.legal-page h2 {
+  margin-top: 38px;
+  font-size: 25px;
+}
+
+.legal-page p {
+  color: #444;
+  font-size: 17px;
+  line-height: 1.8;
+}
