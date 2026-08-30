@@ -19,7 +19,6 @@ async function getKey(secret: string) {
     ["sign", "verify"]
   );
 }
-
 function bytesToBase64url(bytes: ArrayBuffer | Uint8Array) {
   const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   let binary = "";
