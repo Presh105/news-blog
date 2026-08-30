@@ -1,45 +1,26 @@
 "use client";
 
-import {
-  useRef,
-  useState,
-} from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-type ArticleEditorProps = {};
+export default function ArticleEditor() {
+  const router = useRouter();
+  const editorRef = useRef<HTMLDivElement>(null);
 
-export default function ArticleEditor(
-  {}: ArticleEditorProps
-) {
+  const [title, setTitle] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [author, setAuthor] = useState("");
+  const [category, setCategory] = useState("News");
+  const [image, setImage] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
 
-  const editorRef =
-    useRef<HTMLDivElement>(null);
-
-  const [title, setTitle] =
-    useState("");
-
-  const [excerpt, setExcerpt] =
-    useState("");
-
-  const [author, setAuthor] =
-    useState("");
-
-  const [category, setCategory] =
-    useState("News");
-
-  const [image, setImage] =
-    useState("");
-
-  const [sourceUrl, setSourceUrl] =
-    useState("");
-
-  const [slug, setSlug] =
-    useState("");
-
-  const [message, setMessage] =
-    useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"error" | "success" | "">("");
+  const [publishing, setPublishing] = useState(false);
 
   function makeSlug(value: string) {
-
     return value
       .toLowerCase()
       .trim()
@@ -48,143 +29,74 @@ export default function ArticleEditor(
       .replace(/-+/g, "-");
   }
 
-  function handleTitleChange(
-    value: string
-  ) {
-
+  function handleTitleChange(value: string) {
     setTitle(value);
 
-    if (!slug) {
+    if (!slugTouched) {
       setSlug(makeSlug(value));
     }
   }
 
-  function command(
-    name: string,
-    value?: string
-  ) {
+  function handleSlugChange(value: string) {
+    setSlugTouched(true);
+    setSlug(makeSlug(value));
+  }
 
-    document.execCommand(
-      name,
-      false,
-      value
-    );
-
+  function command(name: string, value?: string) {
+    document.execCommand(name, false, value);
     editorRef.current?.focus();
   }
 
   function createLink() {
-
-    const url =
-      window.prompt(
-        "Enter the URL:"
-      );
-
+    const url = window.prompt("Enter the URL:");
     if (!url) return;
-
-    command(
-      "createLink",
-      url
-    );
+    command("createLink", url);
   }
 
-  function insertHeading() {
-
-    command(
-      "formatBlock",
-      "h2"
-    );
+  function insertHeading(level: "h2" | "h3") {
+    command("formatBlock", level);
   }
 
   function insertParagraph() {
-
-    command(
-      "formatBlock",
-      "p"
-    );
+    command("formatBlock", "p");
   }
 
   function insertQuote() {
-
-    command(
-      "formatBlock",
-      "blockquote"
-    );
+    command("formatBlock", "blockquote");
   }
 
   function insertUnorderedList() {
-
-    command(
-      "insertUnorderedList"
-    );
+    command("insertUnorderedList");
   }
 
   function insertOrderedList() {
-
-    command(
-      "insertOrderedList"
-    );
+    command("insertOrderedList");
   }
 
-  function cleanPastedText(
-    event: React.ClipboardEvent<HTMLDivElement>
-  ) {
-
+  function cleanPastedText(event: React.ClipboardEvent<HTMLDivElement>) {
     event.preventDefault();
-
-    const text =
-      event.clipboardData
-        .getData("text/plain");
-
-    document.execCommand(
-      "insertText",
-      false,
-      text
-    );
+    const text = event.clipboardData.getData("text/plain");
+    document.execCommand("insertText", false, text);
   }
 
-  function htmlToMarkdown(
-    html: string
-  ) {
-
-    const temp =
-      document.createElement("div");
-
+  function htmlToMarkdown(html: string) {
+    const temp = document.createElement("div");
     temp.innerHTML = html;
 
-    function convert(
-      node: Node
-    ): string {
-
-      if (
-        node.nodeType ===
-        Node.TEXT_NODE
-      ) {
+    function convert(node: Node): string {
+      if (node.nodeType === Node.TEXT_NODE) {
         return node.textContent || "";
       }
 
-      if (
-        node.nodeType !==
-        Node.ELEMENT_NODE
-      ) {
+      if (node.nodeType !== Node.ELEMENT_NODE) {
         return "";
       }
 
-      const element =
-        node as HTMLElement;
-
-      const children =
-        Array.from(
-          element.childNodes
-        )
-          .map(convert)
-          .join("");
-
-      const tag =
-        element.tagName.toLowerCase();
+      const element = node as HTMLElement;
+      const children = Array.from(element.childNodes).map(convert).join("");
+      const tag = element.tagName.toLowerCase();
 
       switch (tag) {
-
         case "h1":
           return `# ${children.trim()}\n\n`;
 
@@ -203,49 +115,31 @@ export default function ArticleEditor(
           return `*${children.trim()}*`;
 
         case "a": {
-
-          const href =
-            element.getAttribute("href");
-
-          return href
-            ? `[${children.trim()}](${href})`
-            : children;
-
+          const href = element.getAttribute("href");
+          return href ? `[${children.trim()}](${href})` : children;
         }
 
         case "blockquote":
-          return children
-            .trim()
-            .split("\n")
-            .map(
-              (line) => `> ${line}`
-            )
-            .join("\n") + "\n\n";
+          return (
+            children
+              .trim()
+              .split("\n")
+              .map((line) => `> ${line}`)
+              .join("\n") + "\n\n"
+          );
 
         case "ul":
           return (
-            Array.from(
-              element.children
-            )
-              .map(
-                (item) =>
-                  `- ${convert(item).trim()}`
-              )
-              .join("\n") +
-            "\n\n"
+            Array.from(element.children)
+              .map((item) => `- ${convert(item).trim()}`)
+              .join("\n") + "\n\n"
           );
 
         case "ol":
           return (
-            Array.from(
-              element.children
-            )
-              .map(
-                (item, index) =>
-                  `${index + 1}. ${convert(item).trim()}`
-              )
-              .join("\n") +
-            "\n\n"
+            Array.from(element.children)
+              .map((item, index) => `${index + 1}. ${convert(item).trim()}`)
+              .join("\n") + "\n\n"
           );
 
         case "li":
@@ -265,338 +159,213 @@ export default function ArticleEditor(
       }
     }
 
-    return Array.from(
-      temp.childNodes
-    )
+    return Array.from(temp.childNodes)
       .map(convert)
       .join("")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
   }
 
-  function generateMarkdown() {
+  function resetForm() {
+    setTitle("");
+    setExcerpt("");
+    setAuthor("");
+    setCategory("News");
+    setImage("");
+    setSourceUrl("");
+    setSlug("");
+    setSlugTouched(false);
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML = "";
+    }
+  }
+
+  async function publishArticle() {
+    setMessage("");
+    setMessageType("");
 
     if (!title.trim()) {
-
-      setMessage(
-        "Please enter an article title."
-      );
-
+      setMessage("Please enter an article title.");
+      setMessageType("error");
       return;
     }
 
-    if (
-      !editorRef.current ||
-      !editorRef.current.innerText.trim()
-    ) {
-
-      setMessage(
-        "Please write or paste your article."
-      );
-
+    if (!editorRef.current || !editorRef.current.innerText.trim()) {
+      setMessage("Please write or paste your article.");
+      setMessageType("error");
       return;
     }
 
-    const body =
-      htmlToMarkdown(
-        editorRef.current.innerHTML
-      );
+    const content = htmlToMarkdown(editorRef.current.innerHTML);
 
-    const date =
-      new Date()
-        .toISOString()
-        .split("T")[0];
+    setPublishing(true);
 
-    const finalSlug =
-      slug.trim() ||
-      makeSlug(title);
-
-    const markdown = `---
-title: "${title.replace(/"/g, '\\"')}"
-excerpt: "${excerpt.replace(/"/g, '\\"')}"
-date: "${date}"
-author: "${author || "Editor"}"
-category: "${category}"
-${image ? `image: "${image}"` : ""}
-${sourceUrl ? `sourceUrl: "${sourceUrl}"` : ""}
----
-
-${body}
-`;
-
-    navigator.clipboard
-      .writeText(markdown)
-      .then(() => {
-
-        setMessage(
-          `Article copied. Create content/posts/${finalSlug}.md in GitHub and paste it there.`
-        );
-
-      })
-      .catch(() => {
-
-        setMessage(
-          "Article generated. Your browser blocked automatic copying. Select and copy the text from the generated output."
-        );
-
+    try {
+      const response = await fetch("/api/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          slug,
+          excerpt,
+          author,
+          category,
+          image,
+          sourceUrl,
+          content,
+        }),
       });
 
-    const output =
-      document.getElementById(
-        "markdown-output"
-      );
+      const data = await response.json().catch(() => ({}));
 
-    if (output) {
-      output.textContent =
-        markdown;
+      if (!response.ok) {
+        setMessage(data.error || "Something went wrong while publishing.");
+        setMessageType("error");
+        setPublishing(false);
+        return;
+      }
+
+      setMessage(
+        `Published! Your article is being deployed and will be live at ${data.url} within a minute or two.`
+      );
+      setMessageType("success");
+      resetForm();
+      router.refresh();
+    } catch {
+      setMessage(
+        "Could not reach the publishing service. Check your connection and try again."
+      );
+      setMessageType("error");
+    } finally {
+      setPublishing(false);
     }
   }
 
   return (
-
     <div className="editor">
-
       <div className="editor-fields">
-
         <label>
           Article title
-
           <input
             value={title}
-            onChange={(event) =>
-              handleTitleChange(
-                event.target.value
-              )
-            }
+            onChange={(event) => handleTitleChange(event.target.value)}
             placeholder="Enter your article title"
           />
-
         </label>
 
         <label>
           URL slug
-
           <input
             value={slug}
-            onChange={(event) =>
-              setSlug(
-                makeSlug(
-                  event.target.value
-                )
-              )
-            }
+            onChange={(event) => handleSlugChange(event.target.value)}
             placeholder="article-url"
           />
-
         </label>
 
         <label>
           Short description
-
           <textarea
             value={excerpt}
-            onChange={(event) =>
-              setExcerpt(
-                event.target.value
-              )
-            }
+            onChange={(event) => setExcerpt(event.target.value)}
             placeholder="Write a short description of the article"
             rows={3}
           />
-
         </label>
 
         <div className="editor-two-columns">
-
           <label>
             Author
-
             <input
               value={author}
-              onChange={(event) =>
-                setAuthor(
-                  event.target.value
-                )
-              }
+              onChange={(event) => setAuthor(event.target.value)}
               placeholder="Author name"
             />
-
           </label>
 
           <label>
             Category
-
             <select
               value={category}
-              onChange={(event) =>
-                setCategory(
-                  event.target.value
-                )
-              }
+              onChange={(event) => setCategory(event.target.value)}
             >
-
-              <option>
-                News
-              </option>
-
-              <option>
-                Politics
-              </option>
-
-              <option>
-                Business
-              </option>
-
-              <option>
-                Technology
-              </option>
-
-              <option>
-                Sports
-              </option>
-
-              <option>
-                Entertainment
-              </option>
-
-              <option>
-                Education
-              </option>
-
-              <option>
-                Opinion
-              </option>
-
+              <option>News</option>
+              <option>Politics</option>
+              <option>Business</option>
+              <option>Technology</option>
+              <option>Sports</option>
+              <option>Entertainment</option>
+              <option>Education</option>
+              <option>Opinion</option>
             </select>
-
           </label>
-
         </div>
 
         <label>
           Featured image URL
-
           <input
             value={image}
-            onChange={(event) =>
-              setImage(
-                event.target.value
-              )
-            }
+            onChange={(event) => setImage(event.target.value)}
             placeholder="https://..."
           />
-
         </label>
 
         <label>
           Source URL
-
           <input
             value={sourceUrl}
-            onChange={(event) =>
-              setSourceUrl(
-                event.target.value
-              )
-            }
+            onChange={(event) => setSourceUrl(event.target.value)}
             placeholder="https://..."
           />
-
         </label>
-
       </div>
 
       <div className="editor-toolbar">
-
-        <button
-          type="button"
-          onClick={() =>
-            command("undo")
-          }
-        >
+        <button type="button" onClick={() => command("undo")}>
           Undo
         </button>
 
-        <button
-          type="button"
-          onClick={() =>
-            command("redo")
-          }
-        >
+        <button type="button" onClick={() => command("redo")}>
           Redo
         </button>
 
         <span />
 
-        <button
-          type="button"
-          onClick={() =>
-            command("bold")
-          }
-        >
+        <button type="button" onClick={() => command("bold")}>
           Bold
         </button>
 
-        <button
-          type="button"
-          onClick={() =>
-            command("italic")
-          }
-        >
+        <button type="button" onClick={() => command("italic")}>
           Italic
         </button>
 
-        <button
-          type="button"
-          onClick={
-            insertHeading
-          }
-        >
+        <button type="button" onClick={() => insertHeading("h2")}>
           H2
         </button>
 
-        <button
-          type="button"
-          onClick={
-            insertParagraph
-          }
-        >
+        <button type="button" onClick={() => insertHeading("h3")}>
+          H3
+        </button>
+
+        <button type="button" onClick={insertParagraph}>
           P
         </button>
 
-        <button
-          type="button"
-          onClick={
-            insertQuote
-          }
-        >
+        <button type="button" onClick={insertQuote}>
           Quote
         </button>
 
-        <button
-          type="button"
-          onClick={
-            insertUnorderedList
-          }
-        >
+        <button type="button" onClick={insertUnorderedList}>
           • List
         </button>
 
-        <button
-          type="button"
-          onClick={
-            insertOrderedList
-          }
-        >
+        <button type="button" onClick={insertOrderedList}>
           1. List
         </button>
 
-        <button
-          type="button"
-          onClick={createLink}
-        >
+        <button type="button" onClick={createLink}>
           Link
         </button>
-
       </div>
 
       <div
@@ -611,34 +380,25 @@ ${body}
       <button
         className="publish-button"
         type="button"
-        onClick={
-          generateMarkdown
-        }
+        onClick={publishArticle}
+        disabled={publishing}
       >
-        Generate Article
+        {publishing ? "Publishing..." : "Publish Article"}
       </button>
 
       {message && (
-
-        <div className="editor-message">
+        <div
+          className={
+            messageType === "error"
+              ? "editor-message editor-message-error"
+              : messageType === "success"
+              ? "editor-message editor-message-success"
+              : "editor-message"
+          }
+        >
           {message}
         </div>
-
       )}
-
-      <div className="generated-section">
-
-        <h2>
-          Generated article
-        </h2>
-
-        <pre
-          id="markdown-output"
-          className="markdown-output"
-        />
-
-      </div>
-
     </div>
   );
-               }
+      }
