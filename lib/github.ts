@@ -95,4 +95,39 @@ export async function commitFile(options: {
     const errBody = await response.text().catch(() => "");
     throw new Error(`GitHub commit failed (${response.status}): ${errBody}`);
   }
+}
+
+/**
+ * Commits a binary file (e.g. an image) where the content is already
+ * base64-encoded by the caller - unlike commitFile, this does not
+ * re-encode a UTF-8 string, since that would corrupt binary data.
+ */
+export async function commitBinaryFile(options: {
+  path: string;
+  base64Content: string;
+  message: string;
+}): Promise<void> {
+  const { token, owner, repo, branch } = getConfig();
+
+  const url = `${GITHUB_API}/repos/${owner}/${repo}/contents/${encodeURIComponent(
+    options.path
+  )}`;
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      ...authHeaders(token),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: options.message,
+      content: options.base64Content,
+      branch,
+    }),
+  });
+
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => "");
+    throw new Error(`GitHub image upload failed (${response.status}): ${errBody}`);
+  }
   }
