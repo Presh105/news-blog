@@ -845,6 +845,17 @@ img {
 
   font-size: 14px;
 }
+.editor-message-error {
+  background: #fdecea;
+  border-color: #f3b4ac;
+  color: #7a1f14;
+}
+
+.editor-message-success {
+  background: #e9f7ef;
+  border-color: #a9dfbf;
+  color: #1e5631;
+}
 
 .generated-section {
   border-top: 1px solid var(--border);
