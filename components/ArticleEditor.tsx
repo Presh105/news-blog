@@ -20,6 +20,9 @@ export default function ArticleEditor() {
   const [messageType, setMessageType] = useState<"error" | "success" | "">("");
   const [publishing, setPublishing] = useState(false);
 
+  const [imageStatus, setImageStatus] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   function makeSlug(value: string) {
     return value
       .toLowerCase()
@@ -166,6 +169,104 @@ export default function ArticleEditor() {
       .trim();
   }
 
+  function resizeImageFile(
+    file: File,
+    maxDimension = 1600,
+    quality = 0.82
+  ): Promise<{ base64: string; contentType: string }> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onerror = () => reject(new Error("Could not read the image file."));
+
+      reader.onload = () => {
+        const img = new window.Image();
+
+        img.onerror = () => reject(new Error("Could not load the image file."));
+
+        img.onload = () => {
+          let width = img.naturalWidth;
+          let height = img.naturalHeight;
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width >= height) {
+              height = Math.round((height / width) * maxDimension);
+              width = maxDimension;
+            } else {
+              width = Math.round((width / height) * maxDimension);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Could not process the image."));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL("image/jpeg", quality);
+          const base64 = dataUrl.split(",")[1] || "";
+
+          resolve({ base64, contentType: "image/jpeg" });
+        };
+
+        img.src = reader.result as string;
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleImageFileChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setImageStatus("Please choose an image file.");
+      return;
+    }
+
+    setUploadingImage(true);
+    setImageStatus("Optimizing and uploading...");
+
+    try {
+      const { base64, contentType } = await resizeImageFile(file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType, base64 }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setImageStatus(data.error || "Image upload failed.");
+        setUploadingImage(false);
+        return;
+      }
+
+      setImage(data.url);
+      setImageStatus("Image uploaded.");
+    } catch (err) {
+      setImageStatus(
+        err instanceof Error ? err.message : "Image upload failed."
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   function resetForm() {
     setTitle("");
     setExcerpt("");
@@ -175,6 +276,7 @@ export default function ArticleEditor() {
     setSourceUrl("");
     setSlug("");
     setSlugTouched(false);
+    setImageStatus("");
 
     if (editorRef.current) {
       editorRef.current.innerHTML = "";
@@ -302,7 +404,25 @@ export default function ArticleEditor() {
         </div>
 
         <label>
-          Featured image URL
+          Featured image
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleImageFileChange}
+            disabled={uploadingImage}
+          />
+        </label>
+
+        {imageStatus && <p className="image-status">{imageStatus}</p>}
+
+        {image && (
+          <div className="image-preview">
+            <img src={image} alt="Featured preview" />
+          </div>
+        )}
+
+        <label>
+          Image URL (fills in automatically after upload, or paste one)
           <input
             value={image}
             onChange={(event) => setImage(event.target.value)}
@@ -381,7 +501,7 @@ export default function ArticleEditor() {
         className="publish-button"
         type="button"
         onClick={publishArticle}
-        disabled={publishing}
+        disabled={publishing || uploadingImage}
       >
         {publishing ? "Publishing..." : "Publish Article"}
       </button>
@@ -401,4 +521,4 @@ export default function ArticleEditor() {
       )}
     </div>
   );
-      }
+                            }
