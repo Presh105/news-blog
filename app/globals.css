@@ -857,6 +857,25 @@ img {
   color: #1e5631;
 }
 
+.image-status {
+  font-size: 13px;
+  color: var(--muted);
+  margin: -8px 0 0;
+}
+
+.image-preview {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 320px;
+}
+
+.image-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .generated-section {
   border-top: 1px solid var(--border);
   padding: 24px;
